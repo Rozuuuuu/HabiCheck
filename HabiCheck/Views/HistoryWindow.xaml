@@ -1,0 +1,152 @@
+<Window x:Class="HabiCheck.Views.HistoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:controls="clr-namespace:HabiCheck.Views.Controls"
+        xmlns:models="clr-namespace:HabiCheck.Models"
+        xmlns:converters="clr-namespace:HabiCheck.Converters"
+        mc:Ignorable="d"
+        Title="HabiCheck — Scan History" 
+        Height="750" Width="500"
+        MinHeight="580" MinWidth="420"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource CreamBrush}"
+        ResizeMode="CanResize">
+
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:InverseBoolConverter x:Key="InverseBool"/>
+
+        <!-- Premium styles for scan history items -->
+        <Style x:Key="HistoryItemBorder" TargetType="Border">
+            <Setter Property="Background" Value="#FAF8F5"/>
+            <Setter Property="BorderBrush" Value="#EAE7E2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="DeleteButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TerracottaBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFF1E8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Scrollable Content -->
+            <RowDefinition Height="Auto"/> <!-- Bottom Nav Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header -->
+        <Border Grid.Row="0" Background="{StaticResource DeepSageBrush}" Padding="20,15">
+            <TextBlock Text="📜 Scan History &amp; Audit" FontSize="18" FontWeight="Black" Foreground="{StaticResource CreamBrush}"/>
+        </Border>
+
+        <!-- 2. Scrollable Body -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,16,16,0">
+            <StackPanel>
+                <!-- Antigravity AI Weekly Digest Card (Feature 3) -->
+                <!-- 💡 DEVELOPER NOTE: DataContext matches this window's HistoryViewModel so the card binds to it -->
+                <controls:HistoryDigestCard/>
+
+                <TextBlock Text="📁 Past Scans" FontSize="15" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}" Margin="0,0,0,12"/>
+
+                <!-- Loading scans indicator -->
+                <StackPanel Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" Margin="0,20,0,20">
+                    <TextBlock Text="Reading database..." FontStyle="Italic" Foreground="Gray" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Empty State -->
+                <TextBlock Text="Your scan history is empty. Choose 'Scan Fabric' at the bottom to analyze a fabric sample!" 
+                           FontStyle="Italic" Foreground="Gray" HorizontalAlignment="Center" Margin="20,10,20,30" TextAlignment="Center" TextWrapping="Wrap"
+                           Visibility="{Binding Scans.Count, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Scans.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Scans Items Control -->
+                <ItemsControl ItemsSource="{Binding Scans}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:ScanRecord}">
+                            <Border Style="{StaticResource HistoryItemBorder}">
+                                <Border.InputBindings>
+                                    <!-- Double-click or single-click opens detail -->
+                                    <MouseBinding MouseAction="LeftClick" 
+                                                  Command="{Binding DataContext.ViewScanDetailCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
+                                                  CommandParameter="{Binding}"/>
+                                </Border.InputBindings>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/> <!-- Thumbnail -->
+                                        <ColumnDefinition Width="*"/>    <!-- Text details -->
+                                        <ColumnDefinition Width="Auto"/> <!-- Grade & Delete -->
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Fabric Icon / Thumbnail -->
+                                    <TextBlock Grid.Column="0" Text="👕" FontSize="28" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                                    <!-- Details -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding FabricName}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                                        <TextBlock Text="{Binding FiberType}" FontSize="12" Foreground="#66625D" Margin="0,2,0,4"/>
+                                        <TextBlock Text="{Binding ScannedAt, StringFormat='{}{0:g}'}" FontSize="10" Foreground="DarkGray"/>
+                                    </StackPanel>
+
+                                    <!-- Grade Badge & Delete Action -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <!-- Grade Badge -->
+                                        <Border Width="36" Height="36" Background="{StaticResource InputBgBrush}" CornerRadius="18" Margin="0,0,10,0">
+                                            <TextBlock Text="{Binding Grade}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TerracottaBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+
+                                        <!-- Delete Button -->
+                                        <Button Content="🗑️" Style="{StaticResource DeleteButton}"
+                                                Command="{Binding DataContext.DeleteScanCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding Id}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Padding spacer at bottom -->
+                <Border Height="30"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Navigation Bar -->
+        <controls:BottomNavBar Grid.Row="2" VerticalAlignment="Bottom"/>
+    </Grid>
+</Window>

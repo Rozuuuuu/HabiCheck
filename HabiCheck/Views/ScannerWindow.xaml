@@ -1,0 +1,159 @@
+<Window x:Class="HabiCheck.Views.ScannerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:controls="clr-namespace:HabiCheck.Views.Controls"
+        xmlns:converters="clr-namespace:HabiCheck.Converters"
+        mc:Ignorable="d"
+        Title="HabiCheck — Scan Fabric"
+        Height="750" Width="520"
+        MinHeight="600" MinWidth="460"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource CreamBrush}"
+        ResizeMode="CanResize">
+
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:InverseBoolConverter      x:Key="InverseBool"/>
+
+        <!-- Shared button template (rounded, no default chrome) -->
+        <ControlTemplate x:Key="RoundedButton" TargetType="Button">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="8" Padding="{TemplateBinding Padding}">
+                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+        </ControlTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- Header -->
+            <RowDefinition Height="*"/>     <!-- Scanner area -->
+            <RowDefinition Height="Auto"/>  <!-- Nav bar -->
+        </Grid.RowDefinitions>
+
+        <!-- ══ HEADER ══ -->
+        <Border Grid.Row="0" Background="{StaticResource DeepSageBrush}" Padding="20,14">
+            <TextBlock Text="📷 AI Fabric Scanner"
+                       FontSize="18" FontWeight="Black"
+                       Foreground="{StaticResource CreamBrush}"/>
+        </Border>
+
+        <!-- ══ CONTENT ══ -->
+        <Grid Grid.Row="1" Margin="20,16,20,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>     <!-- Image picker / preview -->
+                <RowDefinition Height="Auto"/>  <!-- Status -->
+                <RowDefinition Height="Auto"/>  <!-- Buttons -->
+            </Grid.RowDefinitions>
+
+            <!-- ── Image Area ── -->
+            <Grid Grid.Row="0" Margin="0,0,0,14">
+
+                <!-- STATE A  ─ no image yet (shows drop-zone) -->
+                <Border x:Name="DropZone"
+                        Background="#FAF8F5"
+                        BorderBrush="{StaticResource SageGreenBrush}"
+                        BorderThickness="2" CornerRadius="14"
+                        AllowDrop="True"
+                        Visibility="{Binding ImagePath, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}">
+                    <Border.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" Command="{Binding SelectImageCommand}"/>
+                    </Border.InputBindings>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="🖼️" FontSize="52" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="Click to Choose a Fabric Photo"
+                                   FontSize="15" FontWeight="Bold"
+                                   Foreground="{StaticResource DeepSageBrush}"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Supports JPG, JPEG, PNG"
+                                   FontSize="11" Foreground="#9C9790"
+                                   HorizontalAlignment="Center" Margin="0,4,0,20"/>
+                        <Button Content="Browse Files…"
+                                Padding="20,10"
+                                Background="{StaticResource DeepSageBrush}"
+                                Foreground="{StaticResource CreamBrush}"
+                                BorderThickness="0" Cursor="Hand"
+                                Command="{Binding SelectImageCommand}"
+                                Template="{StaticResource RoundedButton}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- STATE B  ─ image selected (thumbnail preview) -->
+                <Border Background="#FAF8F5"
+                        BorderBrush="#EAE7E2" BorderThickness="1.5"
+                        CornerRadius="14" ClipToBounds="True"
+                        Visibility="{Binding ImagePath, Converter={StaticResource BoolToVisibility}}">
+                    <Grid>
+                        <!-- The thumbnail itself -->
+                        <Image Source="{Binding ImagePath}"
+                               Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+
+                        <!-- Overlay: Change Photo button (top-right) -->
+                        <Button Content="✏️ Change Photo"
+                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                Margin="10" Padding="12,6"
+                                Background="#CC2D4A3E"
+                                Foreground="{StaticResource CreamBrush}"
+                                BorderThickness="0" Cursor="Hand"
+                                FontSize="12" FontWeight="SemiBold"
+                                Command="{Binding SelectImageCommand}"
+                                Template="{StaticResource RoundedButton}"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ── Status / Progress ── -->
+            <Border Grid.Row="1"
+                    Background="{StaticResource InputBgBrush}"
+                    CornerRadius="8" Padding="16,10" Margin="0,0,0,14">
+                <StackPanel>
+                    <TextBlock Text="{Binding StatusMessage}"
+                               TextWrapping="Wrap" FontSize="13"
+                               Foreground="{StaticResource DeepSageBrush}"
+                               HorizontalAlignment="Center"
+                               FontWeight="SemiBold" TextAlignment="Center"/>
+                    <ProgressBar Height="4" IsIndeterminate="True"
+                                 Margin="0,8,0,0"
+                                 Foreground="{StaticResource TerracottaBrush}"
+                                 Background="#DCD6CD" BorderThickness="0"
+                                 Visibility="{Binding IsScanning, Converter={StaticResource BoolToVisibility}}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ── Action Buttons ── -->
+            <StackPanel Grid.Row="2" Margin="0,0,0,6">
+                <!-- Scan -->
+                <Button Content="✨ Scan Fabric"
+                        Height="50" Margin="0,0,0,10"
+                        FontSize="16" FontWeight="Bold"
+                        Cursor="Hand"
+                        Foreground="{StaticResource CreamBrush}"
+                        Background="{StaticResource TerracottaBrush}"
+                        BorderThickness="0"
+                        Command="{Binding StartScanCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                        IsEnabled="{Binding CanScan}"
+                        Template="{StaticResource RoundedButton}"/>
+
+                <!-- Cancel -->
+                <Button Content="Cancel"
+                        Height="40"
+                        FontSize="14" Cursor="Hand"
+                        Foreground="#66625D"
+                        Background="Transparent"
+                        BorderBrush="#C1BDB5" BorderThickness="1.5"
+                        Command="{Binding CancelCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                        IsEnabled="{Binding IsScanning, Converter={StaticResource InverseBool}}"
+                        Template="{StaticResource RoundedButton}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- ══ BOTTOM NAV ══ -->
+        <controls:BottomNavBar Grid.Row="2"/>
+    </Grid>
+</Window>

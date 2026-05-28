@@ -1,0 +1,1032 @@
+
+
+# ANTIGRAVITY BUILD PROMPT — C# / WPF VERSION
+### For: Claude Opus — claude-opus-4-20250514
+### Project: Habi-Check Desktop App (converted from React/TypeScript to C# WPF)
+### Developer Level: Average developer with basic C# knowledge — needs clear guidance
+
+---
+
+## ⚠️ IMPORTANT NOTE TO THE AI ABOUT THIS DEVELOPER
+
+The person you are helping is an **average developer who knows a little C#**. This means:
+
+- They understand variables, if/else, loops, and basic classes
+- They may not know advanced C# concepts like generics (`List<T>`), `async/await`, or dependency injection yet — **explain these briefly when you use them**
+- They have likely not used WPF before — **explain what each file and folder is for**
+- They are not a complete beginner — do not over-explain basics, but **do add a short comment on anything that might be unfamiliar**
+- When you write a method, **add a plain-English XML doc comment above it** so they know what it does
+- If you use a NuGet package, **tell them exactly how to install it** (right-click project → Manage NuGet Packages → search for X)
+
+Do not assume they know React, TypeScript, Supabase, or any web technology. They are coming from C# only.
+
+---
+
+## CRITICAL PRE-BUILD INSTRUCTIONS — READ THIS ENTIRE DOCUMENT BEFORE WRITING A SINGLE LINE OF CODE
+
+You are a senior C# / WPF engineer. You have been given a complete feature specification and a beginner-friendly C# developer to guide. Your job is to build the **Antigravity** AI feature into a WPF Windows desktop app that matches the behavior of the original React web app.
+
+**You must not:**
+- Invent database tables or SQLite columns that are not described here
+- Add NuGet packages unless they are listed in Section 3 of this prompt
+- Skip explaining what a new concept means the first time you use it
+- Leave the developer with broken code that won't compile
+- Use advanced LINQ or reflection tricks without a comment explaining them
+- Assume `async/await` is understood — explain it the first time
+
+**You must:**
+- Read every section before writing any code
+- Follow the exact project structure described in Section 2
+- Add XML doc comments (`/// <summary>`) to every public method and class
+- When you translate TypeScript types to C#, show the mapping explicitly
+- Write code that compiles on first try — no placeholder `// TODO` bodies
+
+---
+
+## SECTION 1: WHAT THIS APP IS
+
+### 1.1 App Summary
+
+**Habi-Check** is an eco-conscious fabric scanner app originally built in React/TypeScript for web browsers. We are rebuilding it as a **native Windows desktop app** using **WPF** (Windows Presentation Foundation), which is Microsoft's framework for building Windows applications using C#.
+
+The app lets users:
+1. Log in with a local username/password stored on the device (no cloud account needed)
+2. Scan fabric photos and get a grade (A+ for natural fibers, F- for synthetic)
+3. See their scan history and fabric details
+4. Get personalized advice based on their "hulas level" (how much they sweat in Cebu's heat)
+
+We are adding the **Antigravity** feature: three AI-powered panels that use the Anthropic Claude API to give smart fabric advice.
+
+### 1.2 What is WPF? (For the Developer)
+
+WPF is a C# framework for building Windows desktop applications. Instead of HTML + CSS, you write **XAML** (XML-based UI markup) for the window layout and **C#** for the logic. Think of it like:
+- XAML = the HTML of your window (what things look like)
+- Code-behind / ViewModel = the C# that makes things work
+
+We use the **MVVM pattern** (Model-View-ViewModel), which is the standard .NET way to organize code:
+- **Model** = your data (e.g., `ScanRecord`, `FabricData`)
+- **View** = your XAML windows and user controls (e.g., `ScanDetailWindow.xaml`)
+- **ViewModel** = the C# class that connects data to the screen (e.g., `ScanDetailViewModel.cs`)
+
+### 1.3 Local-Only Database
+
+All data is stored in a **SQLite database file** on the user's own computer. There is no cloud, no internet account, and no Supabase. The database file lives at:
+
+```
+C:\Users\<username>\AppData\Local\HabiCheck\habicheck.db
+```
+
+This means the app works fully offline. The only internet connection required is for the AI chat feature (calls to the Anthropic Claude API).
+
+---
+
+## SECTION 2: PROJECT STRUCTURE — WHAT TO CREATE
+
+The solution is named `HabiCheck`. Below is the **complete folder and file structure**. Every file listed here must be created. Do not create files that are not on this list.
+
+```
+HabiCheck/                          ← Solution root
+├── HabiCheck.sln                   ← Visual Studio solution file
+└── HabiCheck/                      ← Main WPF project
+    ├── HabiCheck.csproj             ← Project file (NuGet packages go here)
+    ├── App.xaml / App.xaml.cs       ← App startup, dependency injection setup
+    │
+    ├── Models/                      ← C# equivalents of TypeScript interfaces
+    │   ├── ScanRecord.cs
+    │   ├── FabricData.cs
+    │   ├── WeatherInfo.cs
+    │   ├── DigestResult.cs          ← NEW — Antigravity
+    │   ├── ScanInsight.cs           ← NEW — Antigravity
+    │   ├── HulasLevel.cs
+    │   └── FabricChatMessage.cs
+    │
+    ├── Services/                    ← Business logic (equivalent of src/lib/)
+    │   ├── DatabaseService.cs       ← LOCAL SQLite database (replaces Supabase)
+    │   ├── HabiService.cs           ← Fabric logic (translated from habi.ts)
+    │   └── AntigravityService.cs    ← NEW — AI calls (translated from antigravity.ts)
+    │
+    ├── ViewModels/                  ← MVVM ViewModels
+    │   ├── LoginViewModel.cs
+    │   ├── OnboardingViewModel.cs
+    │   ├── DashboardViewModel.cs
+    │   ├── ScannerViewModel.cs
+    │   ├── ResultViewModel.cs
+    │   ├── ScanDetailViewModel.cs   ← MODIFIED — add chat
+    │   ├── HistoryViewModel.cs      ← MODIFIED — add digest
+    │   └── AntigravityViewModel.cs  ← NEW — shared AI state helpers
+    │
+    ├── Views/                       ← XAML windows and user controls
+    │   ├── LoginWindow.xaml / .cs
+    │   ├── OnboardingWindow.xaml / .cs
+    │   ├── DashboardWindow.xaml / .cs
+    │   ├── ScannerWindow.xaml / .cs
+    │   ├── ResultWindow.xaml / .cs
+    │   ├── ScanDetailWindow.xaml / .cs
+    │   ├── HistoryWindow.xaml / .cs
+    │   └── Controls/                ← Reusable UI pieces (UserControl in WPF)
+    │       ├── BottomNavBar.xaml / .cs
+    │       ├── FabricChatControl.xaml / .cs   ← NEW — Antigravity
+    │       └── HistoryDigestCard.xaml / .cs   ← NEW — Antigravity
+    │
+    └── Resources/
+        └── Styles/
+            └── Colors.xaml          ← Design tokens (equivalent of Tailwind CSS vars)
+```
+
+### 2.1 Navigation (equivalent of App.tsx routes)
+
+In WPF, navigation between screens is done by showing and hiding windows, or by using a `Frame` with `Page` objects. We use the simpler **window-switching approach** for this app. To navigate:
+
+```csharp
+// Show a new window and close the current one
+var next = new DashboardWindow();
+next.Show();
+this.Close(); // 'this' is the current window
+
+// Show a detail window with a parameter
+var detail = new ScanDetailWindow(scanId);
+detail.Show();
+```
+
+The screens and their window classes:
+
+| Original Web Route | Window Class |
+|---|---|
+| `/login` | `LoginWindow` |
+| `/onboarding` | `OnboardingWindow` |
+| `/dashboard` | `DashboardWindow` |
+| `/scanner` | `ScannerWindow` |
+| `/result` | `ResultWindow` |
+| `/scan/:id` | `ScanDetailWindow` |
+| `/history` | `HistoryWindow` |
+
+---
+
+## SECTION 3: REQUIRED NUGET PACKAGES
+
+These are the only NuGet packages allowed. Install them by right-clicking the `HabiCheck` project in Solution Explorer → Manage NuGet Packages → Browse → search the name below.
+
+| Package Name | Version | Purpose | TypeScript Equivalent |
+|---|---|---|---|
+| `Microsoft.Data.Sqlite` | 8.x | Local SQLite database (replaces Supabase) | N/A |
+| `CommunityToolkit.Mvvm` | 8.x | MVVM helpers (removes boilerplate) | N/A (React state) |
+| `Newtonsoft.Json` | 13.x | JSON parsing | `JSON.parse()` |
+
+**Do not add any other packages.** The Anthropic API is called using `HttpClient`, which is built into .NET. WPF itself is built into Windows and requires no NuGet package.
+
+---
+
+## SECTION 4: THE LOCAL DATABASE — SQLITE SETUP
+
+### 4.1 Why SQLite Instead of Supabase
+
+The original app used Supabase (a cloud database service). This app stores everything **locally on the user's computer** using SQLite — a single file that acts as a full relational database. No account, no internet, no server needed.
+
+### 4.2 `Services/DatabaseService.cs`
+
+This service creates and manages the local SQLite database. It replaces all Supabase calls from the original app.
+
+```csharp
+// DatabaseService.cs
+// This class handles ALL reading and writing to the local database.
+// It is the replacement for SupabaseService.cs in the original prompt.
+//
+// SQLite stores your data in a single .db file on the user's computer.
+// Microsoft.Data.Sqlite is the NuGet package that lets C# talk to SQLite.
+
+using Microsoft.Data.Sqlite;
+
+namespace HabiCheck.Services;
+
+public class DatabaseService
+{
+    // 💡 DEVELOPER NOTE: This is the path to the database file on the user's computer.
+    // Environment.GetFolderPath gives us the correct path for any Windows user.
+    private static readonly string DbFolder =
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "HabiCheck");
+
+    private static readonly string DbPath = Path.Combine(DbFolder, "habicheck.db");
+
+    // The connection string tells SQLite where the database file is.
+    private readonly string _connectionString;
+
+    public DatabaseService()
+    {
+        // Make sure the folder exists before trying to create the file
+        Directory.CreateDirectory(DbFolder);
+        _connectionString = $"Data Source={DbPath}";
+        InitializeDatabase();
+    }
+
+    /// <summary>
+    /// Creates the database tables if they don't exist yet.
+    /// Safe to call every time the app starts — it won't delete existing data.
+    /// </summary>
+    private void InitializeDatabase()
+    {
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+
+        // 'CREATE TABLE IF NOT EXISTS' means: only create if it's not already there.
+        var command = connection.CreateCommand();
+        command.CommandText = @"
+            CREATE TABLE IF NOT EXISTS profiles (
+                id          TEXT PRIMARY KEY,
+                username    TEXT NOT NULL,
+                hulas_level TEXT NOT NULL DEFAULT 'Pawisin'
+            );
+
+            CREATE TABLE IF NOT EXISTS scans (
+                id          TEXT PRIMARY KEY,
+                profile_id  TEXT NOT NULL,
+                fabric_name TEXT NOT NULL,
+                grade       TEXT NOT NULL,
+                fiber_type  TEXT NOT NULL,
+                image_path  TEXT,
+                scanned_at  TEXT NOT NULL
+            );
+        ";
+        command.ExecuteNonQuery();
+    }
+
+    // ── Connection helper ──
+
+    /// <summary>
+    /// Opens and returns a new SQLite connection.
+    /// Always use this inside a 'using' block so the connection closes automatically.
+    /// </summary>
+    public SqliteConnection OpenConnection()
+    {
+        var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+        return connection;
+    }
+
+    // ── Profile methods (replaces Supabase auth + profiles table) ──
+
+    /// <summary>
+    /// Creates a new local user profile. Returns the new profile id (a GUID).
+    /// Equivalent of Supabase signUp in the original app.
+    /// </summary>
+    public string CreateProfile(string username, string hulasLevel = "Pawisin")
+    {
+        var id = Guid.NewGuid().ToString();
+        using var connection = OpenConnection();
+        var cmd = connection.CreateCommand();
+        cmd.CommandText =
+            "INSERT INTO profiles (id, username, hulas_level) VALUES ($id, $username, $hulas)";
+        cmd.Parameters.AddWithValue("$id", id);
+        cmd.Parameters.AddWithValue("$username", username);
+        cmd.Parameters.AddWithValue("$hulas", hulasLevel);
+        cmd.ExecuteNonQuery();
+        return id;
+    }
+
+    /// <summary>
+    /// Finds a profile by username. Returns null if not found.
+    /// Equivalent of Supabase signInWithPassword in the original app.
+    /// </summary>
+    public (string Id, string Username, string HulasLevel)? GetProfileByUsername(string username)
+    {
+        using var connection = OpenConnection();
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = "SELECT id, username, hulas_level FROM profiles WHERE username = $username LIMIT 1";
+        cmd.Parameters.AddWithValue("$username", username);
+        using var reader = cmd.ExecuteReader();
+        if (reader.Read())
+            return (reader.GetString(0), reader.GetString(1), reader.GetString(2));
+        return null;
+    }
+
+    /// <summary>
+    /// Updates the hulas_level for a profile.
+    /// Equivalent of the Supabase profiles upsert in HabiService.SetHulasAsync().
+    /// </summary>
+    public void UpdateHulasLevel(string profileId, string hulasLevel)
+    {
+        using var connection = OpenConnection();
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = "UPDATE profiles SET hulas_level = $hulas WHERE id = $id";
+        cmd.Parameters.AddWithValue("$hulas", hulasLevel);
+        cmd.Parameters.AddWithValue("$id", profileId);
+        cmd.ExecuteNonQuery();
+    }
+
+    // ── Scan methods (replaces Supabase scans table) ──
+
+    /// <summary>
+    /// Returns all scans for a profile, newest first.
+    /// Equivalent of the Supabase scans query in HabiService.GetRecentScansAsync().
+    /// </summary>
+    public List<(string Id, string FabricName, string Grade, string FiberType, string? ImagePath, string ScannedAt)>
+        GetScans(string profileId, int? limit = null)
+    {
+        using var connection = OpenConnection();
+        var cmd = connection.CreateCommand();
+        var sql = "SELECT id, fabric_name, grade, fiber_type, image_path, scanned_at " +
+                  "FROM scans WHERE profile_id = $pid ORDER BY scanned_at DESC";
+        if (limit.HasValue) sql += $" LIMIT {limit.Value}";
+        cmd.CommandText = sql;
+        cmd.Parameters.AddWithValue("$pid", profileId);
+
+        var results = new List<(string, string, string, string, string?, string)>();
+        using var reader = cmd.ExecuteReader();
+        while (reader.Read())
+        {
+            results.Add((
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4),
+                reader.GetString(5)
+            ));
+        }
+        return results;
+    }
+
+    /// <summary>
+    /// Saves a new scan record to the local database.
+    /// Equivalent of inserting into the Supabase scans table.
+    /// </summary>
+    public void SaveScan(string profileId, string fabricName, string grade,
+        string fiberType, string? imagePath)
+    {
+        using var connection = OpenConnection();
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = @"
+            INSERT INTO scans (id, profile_id, fabric_name, grade, fiber_type, image_path, scanned_at)
+            VALUES ($id, $pid, $name, $grade, $fiber, $img, $at)";
+        cmd.Parameters.AddWithValue("$id", Guid.NewGuid().ToString());
+        cmd.Parameters.AddWithValue("$pid", profileId);
+        cmd.Parameters.AddWithValue("$name", fabricName);
+        cmd.Parameters.AddWithValue("$grade", grade);
+        cmd.Parameters.AddWithValue("$fiber", fiberType);
+        cmd.Parameters.AddWithValue("$img", (object?)imagePath ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("$at", DateTime.UtcNow.ToString("o")); // ISO 8601 format
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>
+    /// Returns a single scan by its id. Returns null if not found.
+    /// </summary>
+    public (string Id, string FabricName, string Grade, string FiberType, string? ImagePath, string ScannedAt)?
+        GetScanById(string scanId)
+    {
+        using var connection = OpenConnection();
+        var cmd = connection.CreateCommand();
+        cmd.CommandText =
+            "SELECT id, fabric_name, grade, fiber_type, image_path, scanned_at FROM scans WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", scanId);
+        using var reader = cmd.ExecuteReader();
+        if (reader.Read())
+            return (reader.GetString(0), reader.GetString(1), reader.GetString(2),
+                    reader.GetString(3),
+                    reader.IsDBNull(4) ? null : reader.GetString(4),
+                    reader.GetString(5));
+        return null;
+    }
+
+    /// <summary>
+    /// Deletes a scan by its id.
+    /// </summary>
+    public void DeleteScan(string scanId)
+    {
+        using var connection = OpenConnection();
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = "DELETE FROM scans WHERE id = $id";
+        cmd.Parameters.AddWithValue("$id", scanId);
+        cmd.ExecuteNonQuery();
+    }
+}
+```
+
+### 4.3 Local Session (replaces Supabase Auth)
+
+Since there is no cloud auth, we track the logged-in user using a simple static class that holds the current profile in memory for the lifetime of the app.
+
+Add this file: **`Services/SessionService.cs`**
+
+```csharp
+// SessionService.cs
+// Holds the currently logged-in user in memory.
+// This replaces Supabase's _supabase.Auth.CurrentUser.
+// 'static' means there is only one instance, shared across the whole app.
+
+namespace HabiCheck.Services;
+
+public static class SessionService
+{
+    // 💡 DEVELOPER NOTE: 'static' properties belong to the class, not an object.
+    // Any code anywhere can read SessionService.CurrentProfileId without
+    // needing to create a SessionService instance.
+    public static string? CurrentProfileId { get; set; }
+    public static string? CurrentUsername { get; set; }
+    public static string? CurrentHulasLevel { get; set; }
+
+    /// <summary>Returns true if a user is currently logged in.</summary>
+    public static bool IsLoggedIn => CurrentProfileId != null;
+
+    /// <summary>Clears the session (equivalent of Supabase signOut).</summary>
+    public static void Clear()
+    {
+        CurrentProfileId = null;
+        CurrentUsername = null;
+        CurrentHulasLevel = null;
+    }
+}
+```
+
+---
+
+## SECTION 5: THE DATA MODELS — C# TRANSLATIONS
+
+### 5.1 How TypeScript Types Become C# Classes
+
+In TypeScript, interfaces are just type descriptions. In C#, we use `class` with properties. Here's the direct translation:
+
+**`Models/ScanRecord.cs`**
+```csharp
+// This is the C# equivalent of the TypeScript ScanRecord interface.
+// In C#, 'string?' means the string can be null (optional).
+// These properties map directly to columns in the local SQLite scans table.
+
+using Newtonsoft.Json;
+
+namespace HabiCheck.Models;
+
+public class ScanRecord
+{
+    public string Id { get; set; } = string.Empty;
+    public string FabricName { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public string FiberType { get; set; } = string.Empty;
+    public string ScannedAt { get; set; } = string.Empty;
+    public string? ImagePath { get; set; }
+
+    // This is NOT in the database — only used for in-memory offline drafts
+    // before they are saved. [JsonIgnore] keeps it out of any JSON serialization.
+    [JsonIgnore]
+    public string? ImageDataUrl { get; set; }
+
+    // Helper property — offline drafts have IDs starting with "offline:"
+    public bool IsOffline => Id.StartsWith("offline:");
+}
+```
+
+**`Models/FabricData.cs`**
+```csharp
+namespace HabiCheck.Models;
+
+public class FabricData
+{
+    public string Name { get; set; } = string.Empty;
+    public string Grade { get; set; } = string.Empty;
+    public string FiberType { get; set; } = string.Empty;
+    public int Breathability { get; set; }
+    public int Sustainability { get; set; }
+    public string? Description { get; set; }
+    public string PersonalMessage { get; set; } = string.Empty;
+    public string? ClimateAlert { get; set; }
+    public List<string> WashTips { get; set; } = new();
+    public string ResaleValue { get; set; } = string.Empty;
+    public string UpcyclingIdea { get; set; } = string.Empty;
+    public bool IsSuccess { get; set; }
+}
+```
+
+**`Models/WeatherInfo.cs`**
+```csharp
+namespace HabiCheck.Models;
+
+public class WeatherInfo
+{
+    public string Location { get; set; } = string.Empty;
+    public int Temperature { get; set; }
+    public int FeelsLike { get; set; }
+    public int Humidity { get; set; }
+    public int WindSpeed { get; set; }
+    public string Condition { get; set; } = string.Empty;
+}
+```
+
+**`Models/DigestResult.cs`** ← NEW (Antigravity)
+```csharp
+using Newtonsoft.Json;
+
+namespace HabiCheck.Models;
+
+public class DigestResult
+{
+    [JsonProperty("summary")]
+    public string Summary { get; set; } = string.Empty;
+
+    [JsonProperty("ecoScore")]
+    public int EcoScore { get; set; }
+
+    [JsonProperty("topFabric")]
+    public string TopFabric { get; set; } = string.Empty;
+
+    [JsonProperty("recommendation")]
+    public string Recommendation { get; set; } = string.Empty;
+
+    [JsonProperty("generatedAt")]
+    public string GeneratedAt { get; set; } = string.Empty;
+}
+```
+
+**`Models/ScanInsight.cs`** ← NEW (Antigravity)
+```csharp
+using Newtonsoft.Json;
+
+namespace HabiCheck.Models;
+
+public class ScanInsight
+{
+    [JsonProperty("washTip")]
+    public string WashTip { get; set; } = string.Empty;
+
+    [JsonProperty("ecoTip")]
+    public string EcoTip { get; set; } = string.Empty;
+
+    [JsonProperty("climateTip")]
+    public string ClimateTip { get; set; } = string.Empty;
+}
+```
+
+### 5.2 The HulasLevel Enum
+
+Add this file: **`Models/HulasLevel.cs`**
+```csharp
+namespace HabiCheck.Models;
+
+// An enum is a named set of choices — like a dropdown with fixed options.
+// 'Pawisin' means you sweat a lot; 'Chill' means you stay cool.
+public enum HulasLevel
+{
+    Pawisin,
+    Normal,
+    Chill
+}
+```
+
+### 5.3 The FabricChatMessage Model
+
+Add this file: **`Models/FabricChatMessage.cs`**
+```csharp
+namespace HabiCheck.Models;
+
+// Represents one message in the AI chat.
+// Role is either "user" or "assistant".
+public class FabricChatMessage
+{
+    public string Role { get; set; } = "user";
+    public string Content { get; set; } = string.Empty;
+
+    public FabricChatMessage(string role, string content)
+    {
+        Role = role;
+        Content = content;
+    }
+}
+```
+
+---
+
+## SECTION 6: THE SERVICES — C# TRANSLATIONS
+
+### 6.1 `Services/HabiService.cs` (translated from `src/lib/habi.ts`)
+
+This class holds all fabric logic. It receives `DatabaseService` through dependency injection set up in `App.xaml.cs`.
+
+```csharp
+// HabiService translates the functions from habi.ts into C# methods.
+// All methods that do slow work use 'async Task' —
+// this is like JavaScript's async/await. 'await' pauses the method
+// until the slow work is done, without freezing the window.
+
+using HabiCheck.Models;
+
+namespace HabiCheck.Services;
+
+public class HabiService
+{
+    private readonly DatabaseService _db;
+
+    // 💡 DEVELOPER NOTE: 'readonly' means this field can only be set once, in the constructor.
+    public HabiService(DatabaseService db)
+    {
+        _db = db;
+    }
+
+    // --- HULAS LEVEL ---
+
+    /// <summary>
+    /// Gets the stored hulas level from the local user session.
+    /// Equivalent of getHulas() in habi.ts.
+    /// </summary>
+    public HulasLevel GetHulas()
+    {
+        var stored = SessionService.CurrentHulasLevel ?? "Pawisin";
+        // 💡 DEVELOPER NOTE: Enum.TryParse converts a string like "Pawisin" to
+        // the HulasLevel.Pawisin enum value. The 'out var level' captures the result.
+        return Enum.TryParse<HulasLevel>(stored, out var level) ? level : HulasLevel.Pawisin;
+    }
+
+    /// <summary>
+    /// Saves the hulas level to the local database and updates the session.
+    /// Equivalent of setHulas() in habi.ts.
+    /// </summary>
+    public void SetHulas(HulasLevel value)
+    {
+        var profileId = SessionService.CurrentProfileId;
+        if (profileId != null)
+        {
+            _db.UpdateHulasLevel(profileId, value.ToString());
+            SessionService.CurrentHulasLevel = value.ToString();
+        }
+    }
+
+    // --- SCAN DATA ---
+
+    /// <summary>
+    /// Gets the most recent scans from the local database.
+    /// Equivalent of getRecentScans() in habi.ts.
+    /// </summary>
+    public List<ScanRecord> GetRecentScans(int? limit = null)
+    {
+        var profileId = SessionService.CurrentProfileId ?? string.Empty;
+        var rows = _db.GetScans(profileId, limit);
+        // 💡 DEVELOPER NOTE: .Select() transforms each item in a list — like .map() in JavaScript.
+        return rows.Select(r => new ScanRecord
+        {
+            Id = r.Id,
+            FabricName = r.FabricName,
+            Grade = r.Grade,
+            FiberType = r.FiberType,
+            ScannedAt = r.ScannedAt,
+            ImagePath = r.ImagePath
+        }).ToList();
+    }
+
+    /// <summary>
+    /// Gets a single scan by its id from the local database.
+    /// Returns null if not found.
+    /// </summary>
+    public ScanRecord? GetScanById(string scanId)
+    {
+        var row = _db.GetScanById(scanId);
+        // 💡 DEVELOPER NOTE: '?.' is the null-conditional operator — it only calls
+        // the code on the right if 'row' is not null. Safe way to avoid crashes.
+        if (row == null) return null;
+        return new ScanRecord
+        {
+            Id = row.Value.Id,
+            FabricName = row.Value.FabricName,
+            Grade = row.Value.Grade,
+            FiberType = row.Value.FiberType,
+            ScannedAt = row.Value.ScannedAt,
+            ImagePath = row.Value.ImagePath
+        };
+    }
+
+    /// <summary>
+    /// Returns the local file path for a scan image.
+    /// Images are stored in the HabiCheck app data folder.
+    /// </summary>
+    public string? GetScanImagePath(string? path)
+    {
+        if (string.IsNullOrEmpty(path)) return null;
+        var folder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "HabiCheck", "Images");
+        return Path.Combine(folder, path);
+    }
+
+    // --- FABRIC RESULT BUILDER ---
+
+    /// <summary>
+    /// Builds fabric result data based on success or failure.
+    /// Equivalent of buildFabricResult() in habi.ts.
+    /// </summary>
+    public FabricData BuildFabricResult(bool isSuccess)
+    {
+        var hulas = GetHulas();
+        if (isSuccess)
+        {
+            return new FabricData
+            {
+                Name = "Premium Linen",
+                Grade = "A+",
+                FiberType = "100% Natural Linen",
+                Breathability = 95,
+                Sustainability = 90,
+                PersonalMessage = hulas == HulasLevel.Pawisin
+                    ? "Perfect! Super breathable ito para sa Cebu humidity. Goodbye sticky feeling!"
+                    : "Great choice! This natural fabric will keep you comfortable all day.",
+                WashTips = new List<string> { "Cold water wash only", "Hang dry in shade", "Iron while damp" },
+                ResaleValue = "₱450 – ₱850",
+                UpcyclingIdea = "Reusable market bags or decorative pillow covers.",
+                IsSuccess = true
+            };
+        }
+        return new FabricData
+        {
+            Name = "Polyester Blend",
+            Grade = "F-",
+            FiberType = "85% Polyester, 15% Rayon",
+            Breathability = 25,
+            Sustainability = 15,
+            PersonalMessage = hulas == HulasLevel.Pawisin
+                ? "Babala! Plastic bag ang feel nito sa init. Mataas ang risk ng amoy-araw!"
+                : "Not ideal for our tropical climate. Poor airflow and moisture-wicking.",
+            ClimateAlert = "Sa 32°C ng Cebu, itrap ng fabric na ito ang sweat at magiging amoy-araw ka bago mag-tanghali.",
+            WashTips = new List<string> { "Wash separately", "Use fabric softener", "Low heat or air dry" },
+            ResaleValue = "₱80 – ₱150",
+            UpcyclingIdea = "\"Basahan\" – cleaning cloth for floors or windows.",
+            IsSuccess = false
+        };
+    }
+
+    /// <summary>
+    /// Returns the label and advice text for a given hulas level.
+    /// Equivalent of getHulasPersona() in habi.ts.
+    /// </summary>
+    public (string Label, string Advice) GetHulasPersona(HulasLevel hulas)
+    {
+        // 💡 DEVELOPER NOTE: This is a C# 'switch expression' — cleaner than if/else
+        // for multiple cases.
+        return hulas switch
+        {
+            HulasLevel.Chill => ("Chill Lang Profile", "You stay cool naturally! Cotton or linen blends work great for you."),
+            HulasLevel.Normal => ("Normal Lang Profile", "Breathable cotton or bamboo blends are your best friend."),
+            _ => ("Pawisin Profile", "Sa 32°C ng Cebu, stick to 100% linen or cotton. Iwasan ang polyester!")
+        };
+    }
+
+    /// <summary>
+    /// Returns hardcoded weather data for Cebu.
+    /// Equivalent of getWeather() in habi.ts.
+    /// </summary>
+    public async Task<WeatherInfo> GetWeatherAsync()
+    {
+        // 💡 DEVELOPER NOTE: 'async Task' marks this method as asynchronous.
+        // 'await Task.Delay' pauses without freezing the window.
+        await Task.Delay(400);
+        return new WeatherInfo
+        {
+            Location = "Consolacion, Cebu",
+            Temperature = 32,
+            FeelsLike = 37,
+            Humidity = 85,
+            WindSpeed = 12,
+            Condition = "Sunny"
+        };
+    }
+
+    public string HumidityLabel(int h) =>
+        h >= 80 ? "High Humidity" : h >= 60 ? "Moderate Humidity" : "Low Humidity";
+
+    public string FabricAdvice(int h) =>
+        h >= 80 ? "Wear breathable natural fabrics today!" : "Any breathable fabric works fine today.";
+}
+```
+
+### 6.2 `Services/AntigravityService.cs` ← NEW (translated from `antigravity.ts`)
+
+This is unchanged from the original prompt because it only calls the Anthropic API over the internet — it does not touch the database. Keep it exactly as written in the original Section 5.2, with one addition: add the API key headers in the constructor instead of in `MauiProgram.cs`.
+
+```csharp
+// (Full AntigravityService.cs code is identical to Section 5.2 of the original prompt.)
+// Only change: add these two lines at the end of the constructor:
+_http.DefaultRequestHeaders.TryAddWithoutValidation("x-api-key", GetApiKey());
+_http.DefaultRequestHeaders.TryAddWithoutValidation("anthropic-version", "2023-06-01");
+
+// Add this private helper:
+private static string GetApiKey()
+{
+    // For testing: return your key directly here.
+    // For release: read from a local config file or Windows credential store.
+    return "sk-ant-YOUR_KEY_HERE";
+}
+```
+
+---
+
+## SECTION 7: THE VIEWMODELS — C# MVVM PATTERN
+
+### 7.1 What is a ViewModel? (Explanation for Developer)
+
+In WPF, a **ViewModel** is a C# class that:
+- Holds the data shown on screen (like React's `useState`)
+- Runs commands when the user clicks buttons (like React's `onClick` handlers)
+- Uses `[ObservableProperty]` from CommunityToolkit.Mvvm so the screen updates automatically when a value changes
+
+Think of it like this:
+```
+TypeScript (React)              C# (WPF MVVM)
+─────────────────               ─────────────
+useState<string>("")      →     [ObservableProperty] string fabricName = "";
+const handleClick = () => →     [RelayCommand] void HandleClick()
+useEffect(() => {...})    →     Loaded event or constructor logic
+```
+
+### 7.2 `ViewModels/ScanDetailViewModel.cs` ← MODIFIED (adds Antigravity chat)
+
+This is functionally identical to the original prompt's Section 6.2. Replace all references to MAUI-specific APIs as follows:
+
+| Original MAUI API | WPF Replacement |
+|---|---|
+| `Shell.Current.DisplayAlert(...)` | `MessageBox.Show(...)` |
+| `Shell.Current.GoToAsync(...)` | Open the relevant Window directly |
+| `Preferences.Get/Set(...)` | `SessionService.*` or `DatabaseService.*` |
+
+All `[ObservableProperty]`, `[RelayCommand]`, and `partial class` patterns remain identical — CommunityToolkit.Mvvm works the same in WPF as in MAUI.
+
+### 7.3 `ViewModels/HistoryViewModel.cs` and `ResultViewModel.cs` ← MODIFIED
+
+Apply the same API replacements from the table above. All Antigravity logic (digest generation, insight loading) is identical to the original prompt's Sections 6.3 and 6.4.
+
+---
+
+## SECTION 8: THE VIEWS — XAML UI
+
+### 8.1 Design Tokens (Colors) — `Resources/Styles/Colors.xaml`
+
+```xml
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Color x:Key="Cream">#F5F0E8</Color>
+    <Color x:Key="DeepSage">#2D4A3E</Color>
+    <Color x:Key="SageGreen">#5C8A6E</Color>
+    <Color x:Key="Terracotta">#C4622D</Color>
+    <Color x:Key="InputBg">#F0EDE8</Color>
+
+    <SolidColorBrush x:Key="CreamBrush" Color="{StaticResource Cream}"/>
+    <SolidColorBrush x:Key="DeepSageBrush" Color="{StaticResource DeepSage}"/>
+    <SolidColorBrush x:Key="SageGreenBrush" Color="{StaticResource SageGreen}"/>
+    <SolidColorBrush x:Key="TerracottaBrush" Color="{StaticResource Terracotta}"/>
+    <SolidColorBrush x:Key="InputBgBrush" Color="{StaticResource InputBg}"/>
+</ResourceDictionary>
+```
+
+### 8.2 `Views/Controls/FabricChatControl.xaml` ← NEW (Antigravity)
+
+In WPF, reusable UI components are `UserControl` elements, not `ContentView`. The structure is identical to the original Section 7.2 with these XAML namespace changes:
+
+- Replace `xmlns="http://schemas.microsoft.com/dotnet/2021/maui"` with `xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"`
+- Replace `<ContentView>` with `<UserControl>`
+- Replace `<Frame>` with `<Border>`
+- Replace `<VerticalStackLayout>` with `<StackPanel>`
+- Replace `<Entry>` with `<TextBox>`
+- Replace `<CollectionView>` with `<ItemsControl>`
+- Replace `<HorizontalStackLayout>` with `<StackPanel Orientation="Horizontal">`
+
+All `{Binding}` expressions and command bindings work identically in WPF.
+
+### 8.3 `Views/Controls/HistoryDigestCard.xaml` and the Result Panel
+
+Apply the same WPF XAML element substitutions listed in Section 8.2. All binding paths (`Digest.Summary`, `DigestIsLoading`, etc.) and command names remain identical.
+
+---
+
+## SECTION 9: APP STARTUP — `App.xaml.cs`
+
+In WPF, the startup file is `App.xaml.cs`. This replaces `MauiProgram.cs` from the original prompt.
+
+```csharp
+// App.xaml.cs — WPF startup file.
+// Services are created here and passed where needed.
+// WPF does not have a built-in DI container, so we create services manually
+// and store them as static properties on App for easy access anywhere.
+
+using HabiCheck.Services;
+using System.Windows;
+
+namespace HabiCheck;
+
+public partial class App : Application
+{
+    // 💡 DEVELOPER NOTE: 'static' means these can be accessed from anywhere in the app
+    // without needing an App instance: App.Database, App.Habi, App.Antigravity
+    public static DatabaseService Database { get; private set; } = null!;
+    public static HabiService Habi { get; private set; } = null!;
+    public static AntigravityService Antigravity { get; private set; } = null!;
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+
+        // Create services in dependency order (Database first, then Habi which needs Database)
+        Database = new DatabaseService();
+        Habi = new HabiService(Database);
+        Antigravity = new AntigravityService(new System.Net.Http.HttpClient());
+
+        // Show the login window as the first screen
+        var login = new Views.LoginWindow();
+        login.Show();
+    }
+}
+```
+
+---
+
+## SECTION 10: THE API KEY — HOW TO STORE IT SAFELY
+
+In a WPF Windows app, secrets can be stored in the **Windows Credential Manager** (the secure equivalent of MAUI's `SecureStorage`).
+
+**For development/testing** (simplest — hardcode it):
+In `AntigravityService.cs`, return your key directly from `GetApiKey()`.
+
+**For production** (proper way using Windows Credential Manager):
+```csharp
+// Store the key once (e.g., from a settings window):
+var cred = new System.Net.NetworkCredential("HabiCheckAnthropicKey", "sk-ant-YOUR_KEY");
+// Use the CredentialManager NuGet package OR call Windows APIs directly.
+
+// Retrieve it:
+private static string GetApiKey()
+{
+    // Read from a local plaintext config file in AppData as a simple alternative:
+    var configPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "HabiCheck", "config.txt");
+    return File.Exists(configPath) ? File.ReadAllText(configPath).Trim() : string.Empty;
+}
+```
+
+Tell the developer: a `config.txt` file in the AppData folder is a reasonable way to store the API key during development, since AppData is a user-private folder not visible to other users on the same machine.
+
+---
+
+## SECTION 11: IMPLEMENTATION ORDER — FOLLOW THIS EXACTLY
+
+Build in this order to avoid compile errors where one file depends on another that isn't written yet:
+
+1. **`Models/`** — All 7 model files. These have no dependencies.
+2. **`Resources/Styles/Colors.xaml`** — Design tokens. No dependencies.
+3. **`Services/DatabaseService.cs`** — Local SQLite database. No dependencies.
+4. **`Services/SessionService.cs`** — In-memory session. No dependencies.
+5. **`Services/HabiService.cs`** — Depends on DatabaseService and SessionService.
+6. **`Services/AntigravityService.cs`** — Depends on Models only. Core AI service.
+7. **`App.xaml.cs`** — Wires all services together. Run a basic test that the DB file is created.
+8. **`ViewModels/ScanDetailViewModel.cs`** — Depends on both services.
+9. **`ViewModels/HistoryViewModel.cs`** — Add the digest command.
+10. **`ViewModels/ResultViewModel.cs`** — Add the insight loading method.
+11. **`Views/Controls/FabricChatControl.xaml`** — Chat UI component.
+12. **`Views/Controls/HistoryDigestCard.xaml`** — Digest card UI component.
+13. **`Views/ScanDetailWindow.xaml`** — Add the 💬 button and embed `FabricChatControl`.
+14. **`Views/HistoryWindow.xaml`** — Embed `HistoryDigestCard` at the top.
+15. **`Views/ResultWindow.xaml`** — Add the AI insights block.
+
+---
+
+## SECTION 12: ANTI-HALLUCINATION CONSTRAINTS
+
+These are hard stops. If you are about to do any of these things, stop and re-read this document:
+
+1. **Do not invent new database tables.** The schema has exactly two tables: `profiles` and `scans`. Antigravity results live in ViewModel memory only — they are never saved to the database.
+2. **Do not add NuGet packages not listed in Section 3.** Do not add `Anthropic.SDK` or any Anthropic-specific package. We call the API using raw `HttpClient`.
+3. **Do not add Supabase, cloud auth, or any internet-dependent login.** All auth is local username lookup via `DatabaseService`.
+4. **Do not change the window structure.** The 7 windows in Section 2.1 are the complete list. There is no separate `/chat` or `/insights` window.
+5. **Do not connect the Scanner to the Anthropic API.** The scanner uses a random-result simulation only.
+6. **Do not use `Application.Current.Properties` for storing AI results.** They live in ViewModel `[ObservableProperty]` fields only.
+7. **Do not wrap JSON parsing without the `StripCodeFences` helper.** Claude sometimes wraps JSON in markdown code fences. Always strip before parsing.
+8. **Do not block the UI thread.** Every call to `AntigravityService` must be `await`ed inside an `async` method. Never call `.Result` or `.Wait()` on a Task in WPF — it will freeze the window and can cause deadlocks.
+9. **Do not leave the developer with code that won't compile.** Every method body must be complete.
+
+---
+
+## SECTION 13: WHAT NEEDS EXPLANATION IN THE CODE
+
+Every time you write one of the following, add a short inline comment. Mark it `// 💡 DEVELOPER NOTE`:
+
+- `async Task` / `await`
+- `[ObservableProperty]`
+- `[RelayCommand]`
+- `IEnumerable`, `List<T>`, `.Select()`, `.Where()`, `.FirstOrDefault()`
+- `partial class`
+- `??` or `?.` (null coalescing / null conditional operators)
+- `nameof()`
+- `StringFormat` in XAML bindings
+- Value converters — explain what they are and why they are needed
+- `using var` — explain that this automatically closes/disposes the resource when done (important for SQLite connections)
+
+---
+
+## SECTION 14: FINAL REMINDER
+
+You are building a **Windows desktop app** using **WPF** with a **local SQLite database**. There is no mobile target, no web target, no Supabase, and no cloud login.
+
+The three Antigravity surfaces are:
+- **`ScanDetailWindow`** → 💬 button → `FabricChatControl` → `ScanDetailViewModel.OpenChatAsync()` → `AntigravityService.SendFabricChatMessageAsync()`
+- **`HistoryWindow`** → Digest card → `HistoryDigestCard.xaml` → `HistoryViewModel.GenerateDigestAsync()` → `AntigravityService.GenerateHistoryDigestAsync()`
+- **`ResultWindow`** → Inline insight panel → `ResultViewModel.LoadInsightAsync()` → `AntigravityService.GenerateScanInsightAsync()`
+
+All three flow through `AntigravityService.cs`. The only internet call the app ever makes is to the Anthropic API inside that service. Everything else — user accounts, scan history, settings — is stored locally in `habicheck.db`.
+
+The developer knows a little C#. Write code that is correct, complete, and readable. Add comments for anything unfamiliar. Follow the implementation order in Section 11. Do not skip the anti-hallucination constraints in Section 12.
+
+**Now build it.**

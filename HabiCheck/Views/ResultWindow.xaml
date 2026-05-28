@@ -1,0 +1,209 @@
+<Window x:Class="HabiCheck.Views.ResultWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:converters="clr-namespace:HabiCheck.Converters"
+        mc:Ignorable="d"
+        Title="HabiCheck — Scan Result" 
+        Height="750" Width="500"
+        MinHeight="580" MinWidth="420"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource CreamBrush}"
+        ResizeMode="CanResize">
+
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:InverseBoolConverter x:Key="InverseBool"/>
+
+        <Style x:Key="ResultCard" TargetType="Border">
+            <Setter Property="Background" Value="#FAF8F5"/>
+            <Setter Property="BorderBrush" Value="#EAE7E2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+
+        <Style x:Key="MetricProgress" TargetType="ProgressBar">
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Background" Value="#E5E0D8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Margin" Value="0,4,0,12"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Scrollable Result Cards -->
+            <RowDefinition Height="Auto"/> <!-- Action Buttons -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header -->
+        <Border Grid.Row="0" Background="{StaticResource DeepSageBrush}" Padding="20,15">
+            <Grid>
+                <TextBlock Text="✨ Fabric Analysis Report" FontSize="18" FontWeight="Black" Foreground="{StaticResource CreamBrush}"/>
+                <TextBlock Text="Local Scan" HorizontalAlignment="Right" Foreground="{StaticResource SageGreenBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- 2. Main Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,16,16,0">
+            <StackPanel>
+                <!-- Loading State (For DB query) -->
+                <StackPanel Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}}" Margin="0,30,0,0">
+                    <TextBlock Text="Retrieving scan result..." FontSize="16" Foreground="{StaticResource DeepSageBrush}" HorizontalAlignment="Center"/>
+                    <ProgressBar Height="4" IsIndeterminate="True" Width="200" Margin="0,10,0,0" Foreground="{StaticResource TerracottaBrush}"/>
+                </StackPanel>
+
+                <!-- Loaded State -->
+                <StackPanel Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}">
+                    <!-- Fabric Overview Card -->
+                    <Border Style="{StaticResource ResultCard}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/> <!-- Image Thumbnail -->
+                                <ColumnDefinition Width="*"/>    <!-- Info -->
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Image -->
+                            <Border Grid.Column="0" Width="80" Height="80" CornerRadius="8" Background="{StaticResource InputBgBrush}" Margin="0,0,12,0" ClipToBounds="True">
+                                <Image Source="{Binding LocalImagePath}" Stretch="UniformToFill"/>
+                            </Border>
+
+                            <!-- Main Fabric Spec -->
+                            <StackPanel Grid.Column="1">
+                                <Grid>
+                                    <TextBlock Text="{Binding Fabric.Name}" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                                    <!-- Grade Badge -->
+                                    <Border HorizontalAlignment="Right" Background="{StaticResource TerracottaBrush}" CornerRadius="15" Padding="10,4">
+                                        <TextBlock Text="{Binding Fabric.Grade}" FontSize="12" FontWeight="ExtraBold" Foreground="{StaticResource CreamBrush}"/>
+                                    </Border>
+                                </Grid>
+                                <TextBlock Text="{Binding Fabric.FiberType}" FontSize="13" Foreground="#66625D" Margin="0,2,0,10"/>
+                                
+                                <!-- Meters -->
+                                <TextBlock Text="Breathability Index" FontSize="11" FontWeight="Bold" Foreground="{StaticResource SageGreenBrush}"/>
+                                <Grid>
+                                    <ProgressBar Value="{Binding Fabric.Breathability}" Style="{StaticResource MetricProgress}" Foreground="{StaticResource DeepSageBrush}"/>
+                                    <TextBlock Text="{Binding Fabric.Breathability, StringFormat='{}{0}%'}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}" HorizontalAlignment="Right" Margin="0,-16,0,0"/>
+                                </Grid>
+
+                                <TextBlock Text="Sustainability Score" FontSize="11" FontWeight="Bold" Foreground="{StaticResource SageGreenBrush}"/>
+                                <Grid>
+                                    <ProgressBar Value="{Binding Fabric.Sustainability}" Style="{StaticResource MetricProgress}" Foreground="{StaticResource SageGreenBrush}"/>
+                                    <TextBlock Text="{Binding Fabric.Sustainability, StringFormat='{}{0}%'}" FontSize="9" FontWeight="Bold" Foreground="{StaticResource SageGreenBrush}" HorizontalAlignment="Right" Margin="0,-16,0,0"/>
+                                </Grid>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Advice & Cebu Climate Warning -->
+                    <Border Style="{StaticResource ResultCard}">
+                        <StackPanel>
+                            <TextBlock Text="📝 Wearer Guide" FontSize="14" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Text="{Binding Fabric.PersonalMessage}" FontSize="13" Foreground="#44413E" TextWrapping="Wrap" LineHeight="18" Margin="0,0,0,12"/>
+                            
+                            <!-- Climate Warning (synthetic blend alerts) -->
+                            <Border Background="#FFF1E8" BorderBrush="{StaticResource TerracottaBrush}" BorderThickness="1,0,0,0" Padding="12,10" CornerRadius="0,6,6,0"
+                                    Visibility="{Binding Fabric.ClimateAlert, Converter={StaticResource BoolToVisibility}}">
+                                <StackPanel>
+                                    <TextBlock Text="⚠️ Cebu Climate Alert" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TerracottaBrush}" Margin="0,0,0,4"/>
+                                    <TextBlock Text="{Binding Fabric.ClimateAlert}" FontSize="12" Foreground="#4D3B31" TextWrapping="Wrap" LineHeight="16"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Antigravity AI Insights Panel (Feature 2) -->
+                    <Border Style="{StaticResource ResultCard}" BorderBrush="{StaticResource SageGreenBrush}" BorderThickness="1.5">
+                        <StackPanel>
+                            <TextBlock Text="✨ Antigravity AI Insights" FontSize="15" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}" Margin="0,0,0,5"/>
+                            <TextBlock Text="Gemini's bespoke advice based on the Cebu weather, your sweat profile, and fiber structure." FontSize="11" Foreground="#66625D" Margin="0,0,0,15"/>
+
+                            <!-- AI loading status -->
+                            <StackPanel Visibility="{Binding IsAiLoading, Converter={StaticResource BoolToVisibility}}" Margin="0,10,0,10">
+                                <TextBlock Text="Consulting Antigravity AI..." FontStyle="Italic" Foreground="{StaticResource SageGreenBrush}" HorizontalAlignment="Center"/>
+                                <ProgressBar Height="3" IsIndeterminate="True" Margin="0,8,0,0" Foreground="{StaticResource SageGreenBrush}"/>
+                            </StackPanel>
+
+                            <!-- AI error fallback -->
+                            <StackPanel Visibility="{Binding AiError, Converter={StaticResource BoolToVisibility}}" Margin="0,5,0,5">
+                                <TextBlock Text="{Binding AiError}" Foreground="{StaticResource TerracottaBrush}" FontWeight="SemiBold" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,8"/>
+                                <Button Content="Retry AI Call" Padding="10,6" Background="Transparent" Foreground="{StaticResource DeepSageBrush}" BorderBrush="{StaticResource DeepSageBrush}" BorderThickness="1" HorizontalAlignment="Center" Cursor="Hand"
+                                        Command="{Binding LoadInsightCommand}">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                </Button>
+                            </StackPanel>
+
+                            <!-- Loaded Insights -->
+                            <StackPanel Visibility="{Binding Insight, Converter={StaticResource BoolToVisibility}}">
+                                <!-- Insight A: Wash Advice -->
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Text="🧺 Smart Washing Advice" FontSize="12" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                                    <TextBlock Text="{Binding Insight.WashTip}" FontSize="12" Foreground="#44413E" TextWrapping="Wrap" Margin="0,2,0,0" LineHeight="16"/>
+                                </StackPanel>
+
+                                <!-- Insight B: Eco Tip -->
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Text="🌍 Ecological Advice" FontSize="12" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                                    <TextBlock Text="{Binding Insight.EcoTip}" FontSize="12" Foreground="#44413E" TextWrapping="Wrap" Margin="0,2,0,0" LineHeight="16"/>
+                                </StackPanel>
+
+                                <!-- Insight C: Climate/Wear Comfort -->
+                                <StackPanel>
+                                    <TextBlock Text="☀️ Wear &amp; Comfort Tip" FontSize="12" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                                    <TextBlock Text="{Binding Insight.ClimateTip}" FontSize="12" Foreground="#44413E" TextWrapping="Wrap" Margin="0,2,0,0" LineHeight="16"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Extra bottom margin -->
+                <Border Height="20"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Bottom Action Buttons -->
+        <Border Grid.Row="2" Background="{StaticResource DeepSageBrush}" Padding="15,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0" Content="🏠 Go to Dashboard" Height="40" Margin="0,0,8,0" Cursor="Hand" Background="Transparent" Foreground="{StaticResource CreamBrush}" BorderBrush="{StaticResource CreamBrush}" BorderThickness="1.5"
+                        Command="{Binding NavigateToDashboardCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <Button Grid.Column="1" Content="📜 View Scan History" Height="40" Margin="8,0,0,0" Cursor="Hand" Background="{StaticResource TerracottaBrush}" Foreground="{StaticResource CreamBrush}" BorderThickness="0"
+                        Command="{Binding NavigateToHistoryCommand}"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

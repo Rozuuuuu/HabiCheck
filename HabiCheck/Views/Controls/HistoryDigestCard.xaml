@@ -1,0 +1,123 @@
+<UserControl x:Class="HabiCheck.Views.Controls.HistoryDigestCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:converters="clr-namespace:HabiCheck.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="600">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:InverseBoolConverter x:Key="InverseBool"/>
+
+        <!-- Premium styles for buttons and badges inside this card -->
+        <Style x:Key="DigestButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource DeepSageBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource SageGreenBrush}"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="LightGray"/>
+                    <Setter Property="Foreground" Value="Gray"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Background="#FAF8F5" BorderBrush="{StaticResource SageGreenBrush}" BorderThickness="1.5" CornerRadius="16" Padding="20" Margin="0,0,0,15">
+        <Grid>
+            <!-- 💡 DEVELOPER NOTE: Grid contains two states: loading/button state, and digest display state -->
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- State A: Digest is NOT loaded yet, or currently loading -->
+            <StackPanel Visibility="{Binding HasDigest, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}" HorizontalAlignment="Center" Margin="10">
+                <TextBlock Text="🌱 Antigravity Weekly Eco-Digest" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+                <TextBlock Text="Analyze your wardrobe choices. Calculate your personalized sustainability score and get bespoke local styling advice from our AI agent." 
+                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="500" FontSize="13" Foreground="#66625D" Margin="0,0,0,20"/>
+                
+                <!-- Loading text -->
+                <TextBlock Text="🤖 Analyzing scans and generating your eco score..." FontStyle="Italic" Foreground="{StaticResource SageGreenBrush}" HorizontalAlignment="Center" Margin="0,0,0,15"
+                           Visibility="{Binding IsAiLoading, Converter={StaticResource BoolToVisibility}}"/>
+
+                <!-- Generate Button -->
+                <Button Content="✨ Generate Weekly Audit" Style="{StaticResource DigestButton}"
+                        Command="{Binding GenerateDigestCommand}"
+                        IsEnabled="{Binding IsAiLoading, Converter={StaticResource InverseBool}}"/>
+
+                <!-- Error Message -->
+                <TextBlock Text="{Binding AiError}" Foreground="{StaticResource TerracottaBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,10,0,0" HorizontalAlignment="Center"
+                           Visibility="{Binding AiError, Converter={StaticResource BoolToVisibility}}"/>
+            </StackPanel>
+
+            <!-- State B: Digest IS loaded -->
+            <Grid Visibility="{Binding HasDigest, Converter={StaticResource BoolToVisibility}}" Margin="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="130"/> <!-- Left: Eco Score Circle -->
+                    <ColumnDefinition Width="*"/>   <!-- Right: Info Details -->
+                </Grid.ColumnDefinitions>
+
+                <!-- 1. Circular Eco Score Badge -->
+                <Grid Grid.Column="0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Ellipse Width="110" Height="110" Fill="{StaticResource DeepSageBrush}"/>
+                    <Ellipse Width="96" Height="96" Fill="#FAF8F5"/>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Digest.EcoScore}" FontSize="28" FontWeight="ExtraBold" Foreground="{StaticResource TerracottaBrush}" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Eco Score" FontSize="10" FontWeight="Bold" Foreground="{StaticResource SageGreenBrush}" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 2. Detailed information -->
+                <StackPanel Grid.Column="1" Margin="20,0,0,0">
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock Text="🌱 Your Closet Audit" FontSize="18" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                        
+                        <!-- Mini regenerate button -->
+                        <Button Content="↻ Re-Audit" HorizontalAlignment="Right" Background="Transparent" Foreground="{StaticResource TerracottaBrush}" BorderThickness="0" Cursor="Hand" FontWeight="SemiBold" FontSize="12"
+                                Command="{Binding GenerateDigestCommand}"
+                                IsEnabled="{Binding IsAiLoading, Converter={StaticResource InverseBool}}"/>
+                    </Grid>
+
+                    <!-- Top Fabric Tag -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Dominant Fiber: " FontSize="12" FontWeight="SemiBold" Foreground="#66625D"/>
+                        <Border Background="{StaticResource InputBgBrush}" CornerRadius="4" Padding="6,2" Margin="5,0,0,0">
+                            <TextBlock Text="{Binding Digest.TopFabric}" FontSize="12" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Summary -->
+                    <TextBlock Text="{Binding Digest.Summary}" TextWrapping="Wrap" FontSize="13" Foreground="#44413E" FontStyle="Italic" Margin="0,0,0,12" LineHeight="18"/>
+
+                    <!-- Recommendations box -->
+                    <Border Background="#FFF1E8" BorderBrush="{StaticResource TerracottaBrush}" BorderThickness="1,0,0,0" Padding="12,8" CornerRadius="0,6,6,0">
+                        <StackPanel>
+                            <TextBlock Text="💡 Wardrobe Upgrade Tip" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TerracottaBrush}" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding Digest.Recommendation}" TextWrapping="Wrap" FontSize="12" Foreground="#4D3B31" LineHeight="16"/>
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="{Binding Digest.GeneratedAt, StringFormat='Audited on: {0}'}" FontSize="10" Foreground="Gray" Margin="0,8,0,0" HorizontalAlignment="Right"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

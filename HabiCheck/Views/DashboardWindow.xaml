@@ -1,0 +1,181 @@
+<Window x:Class="HabiCheck.Views.DashboardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:controls="clr-namespace:HabiCheck.Views.Controls"
+        xmlns:models="clr-namespace:HabiCheck.Models"
+        xmlns:converters="clr-namespace:HabiCheck.Converters"
+        mc:Ignorable="d"
+        Title="HabiCheck — Dashboard" 
+        Height="750" Width="500"
+        MinHeight="580" MinWidth="420"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource CreamBrush}"
+        ResizeMode="CanResize">
+
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <Style x:Key="HeaderBlock" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource DeepSageBrush}"/>
+            <Setter Property="Padding" Value="20,15"/>
+        </Style>
+        
+        <Style x:Key="DashboardCard" TargetType="Border">
+            <Setter Property="Background" Value="#FAF8F5"/>
+            <Setter Property="BorderBrush" Value="#EAE7E2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+        </Style>
+
+        <Style x:Key="ScanItemBorder" TargetType="Border">
+            <Setter Property="Background" Value="#FAF8F5"/>
+            <Setter Property="BorderBrush" Value="#EAE7E2"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Top Header -->
+            <RowDefinition Height="*"/>    <!-- Scrollable Content -->
+            <RowDefinition Height="Auto"/> <!-- Bottom Nav Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. Header -->
+        <Border Grid.Row="0" Style="{StaticResource HeaderBlock}">
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="🌱 HabiCheck" FontSize="18" FontWeight="Black" Foreground="{StaticResource CreamBrush}"/>
+                    <!-- 💡 DEVELOPER NOTE: StringFormat allows dynamic text injection in WPF XAML bindings -->
+                    <TextBlock Text="{Binding Username, StringFormat='Welcome back, {0}!'}" FontSize="12" Foreground="{StaticResource SageGreenBrush}" FontWeight="SemiBold"/>
+                </StackPanel>
+                <Button Content="Logout" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="{StaticResource TerracottaBrush}" BorderThickness="0" Cursor="Hand" FontWeight="Bold" Click="Logout_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- 2. Main Content (Scrollable) -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16,16,16,0">
+            <StackPanel>
+                <!-- Hulas Sweat Profile Card -->
+                <Border Style="{StaticResource DashboardCard}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="🥵" FontSize="36" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Cebu Sweat Persona" FontSize="11" FontWeight="Bold" Foreground="{StaticResource SageGreenBrush}"/>
+                            <TextBlock Text="{Binding HulasLabel}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}" Margin="0,2,0,5"/>
+                            <TextBlock Text="{Binding HulasAdvice}" FontSize="12" Foreground="#66625D" TextWrapping="Wrap" LineHeight="16"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Weather Card -->
+                <Border Style="{StaticResource DashboardCard}">
+                    <StackPanel>
+                        <TextBlock Text="☀️ Cebu Weather &amp; Comfort" FontSize="11" FontWeight="Bold" Foreground="{StaticResource SageGreenBrush}" Margin="0,0,0,10"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Left: Temperature -->
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{Binding Weather.Temperature, StringFormat='{}{0}°C'}" FontSize="28" FontWeight="ExtraBold" Foreground="{StaticResource DeepSageBrush}"/>
+                                <TextBlock Text="{Binding Weather.FeelsLike, StringFormat='Feels like {0}°C'}" FontSize="11" Foreground="#66625D"/>
+                                <TextBlock Text="{Binding Weather.Condition}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TerracottaBrush}" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <!-- Right: Humidity and Comfort -->
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Weather.Humidity, StringFormat='Humidity: {0}%'}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                                <TextBlock Text="{Binding HumidityLabel}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource SageGreenBrush}"/>
+                                <TextBlock Text="{Binding FabricAdvice}" FontSize="11" Foreground="#66625D" TextWrapping="Wrap" Margin="0,4,0,0" LineHeight="14"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- Recent Scans Header -->
+                <Grid Margin="0,0,0,10">
+                    <TextBlock Text="📷 Recent Scans" FontSize="14" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                    <TextBlock Text="See All" HorizontalAlignment="Right" Foreground="{StaticResource TerracottaBrush}" FontWeight="SemiBold" Cursor="Hand" VerticalAlignment="Center">
+                        <TextBlock.InputBindings>
+                            <MouseBinding MouseAction="LeftClick" Command="{Binding NavigateToHistoryCommand}" CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"/>
+                        </TextBlock.InputBindings>
+                    </TextBlock>
+                </Grid>
+
+                <!-- Empty state -->
+                <!-- 💡 DEVELOPER NOTE: Binding directly to a list's Count property combined with a converter allows hiding/showing elements -->
+                <TextBlock Text="No fabrics scanned yet. Go to Scan Fabric to analyze your first item!" 
+                           FontStyle="Italic" Foreground="Gray" HorizontalAlignment="Center" Margin="0,10,0,30" TextAlignment="Center"
+                           Visibility="{Binding RecentScans.Count, Converter={StaticResource BoolToVisibility}, ConverterParameter=invert}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding RecentScans.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+
+                <!-- Recent Scans List -->
+                <ItemsControl ItemsSource="{Binding RecentScans}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:ScanRecord}">
+                            <!-- Border wrap allows mouse input gestures in WPF -->
+                            <Border Style="{StaticResource ScanItemBorder}">
+                                <Border.InputBindings>
+                                    <MouseBinding MouseAction="LeftClick" 
+                                                  Command="{Binding DataContext.ViewScanDetailCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" 
+                                                  CommandParameter="{Binding}"/>
+                                </Border.InputBindings>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/> <!-- Icon/Thumbnail -->
+                                        <ColumnDefinition Width="*"/>    <!-- Text details -->
+                                        <ColumnDefinition Width="Auto"/> <!-- Grade Circle -->
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Fabric Icon -->
+                                    <TextBlock Grid.Column="0" Text="👕" FontSize="24" VerticalAlignment="Center" Margin="0,0,12,0"/>
+
+                                    <!-- Details -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding FabricName}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                                        <TextBlock Text="{Binding FiberType}" FontSize="11" Foreground="#66625D"/>
+                                    </StackPanel>
+
+                                    <!-- Grade Badge -->
+                                    <Border Grid.Column="2" Width="36" Height="36" Background="{StaticResource InputBgBrush}" CornerRadius="18" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Grade}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource TerracottaBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                
+                <!-- Extra space to prevent content clipping by bottom nav -->
+                <Border Height="20"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- 3. Navigation Bar -->
+        <controls:BottomNavBar Grid.Row="2" VerticalAlignment="Bottom"/>
+    </Grid>
+</Window>

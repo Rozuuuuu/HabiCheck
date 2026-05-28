@@ -1,0 +1,20 @@
+<!-- Colors.xaml -->
+<!-- Defines application-wide design tokens (curated color palettes). -->
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Raw color values -->
+    <Color x:Key="Cream">#F5F0E8</Color>
+    <Color x:Key="DeepSage">#2D4A3E</Color>
+    <Color x:Key="SageGreen">#5C8A6E</Color>
+    <Color x:Key="Terracotta">#C4622D</Color>
+    <Color x:Key="InputBg">#F0EDE8</Color>
+
+    <!-- SolidColorBrushes for easy use in backgrounds, borders, and texts -->
+    <SolidColorBrush x:Key="CreamBrush" Color="{StaticResource Cream}"/>
+    <SolidColorBrush x:Key="DeepSageBrush" Color="{StaticResource DeepSage}"/>
+    <SolidColorBrush x:Key="SageGreenBrush" Color="{StaticResource SageGreen}"/>
+    <SolidColorBrush x:Key="TerracottaBrush" Color="{StaticResource Terracotta}"/>
+    <SolidColorBrush x:Key="InputBgBrush" Color="{StaticResource InputBg}"/>
+</ResourceDictionary>

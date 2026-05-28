@@ -1,0 +1,151 @@
+<Window x:Class="HabiCheck.Views.OnboardingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:models="clr-namespace:HabiCheck.Models"
+        mc:Ignorable="d"
+        Title="HabiCheck — Onboarding" 
+        Height="700" Width="480"
+        MinHeight="580" MinWidth="400"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource CreamBrush}"
+        ResizeMode="CanResize">
+
+    <Window.Resources>
+        <!-- Style for the hulas level selector buttons -->
+        <Style x:Key="SelectableCardButton" TargetType="Button">
+            <Setter Property="Background" Value="#FAF8F5"/>
+            <Setter Property="Foreground" Value="{StaticResource DeepSageBrush}"/>
+            <Setter Property="BorderBrush" Value="#EAE7E2"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Padding" Value="16,14"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="10" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SaveButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource TerracottaBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="20,14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.9"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="25">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Title / Intro -->
+            <RowDefinition Height="*"/>    <!-- Buttons for Level selection -->
+            <RowDefinition Height="Auto"/> <!-- Advice Panel -->
+            <RowDefinition Height="Auto"/> <!-- Save Command Button -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. Intro -->
+        <StackPanel Grid.Row="0" Margin="0,10,0,25">
+            <TextBlock Text="🔥 Cebu Hulas Level" FontSize="26" FontWeight="Black" Foreground="{StaticResource DeepSageBrush}" Margin="0,0,0,8"/>
+            <TextBlock Text="How do you handle sweat in the tropical climate of Cebu? We customize AI recommendations and fabric alerts specifically for your skin's heat adaptation." 
+                       TextWrapping="Wrap" FontSize="13" Foreground="#66625D" LineHeight="18"/>
+        </StackPanel>
+
+        <!-- 2. Choices -->
+        <StackPanel Grid.Row="1">
+            <!-- PAWISIN choice -->
+            <Button Command="{Binding SelectHulasCommand}" CommandParameter="Pawisin">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource SelectableCardButton}">
+                        <Style.Triggers>
+                            <!-- Trigger highlight when selected -->
+                            <DataTrigger Binding="{Binding SelectedHulas}" Value="{x:Static models:HulasLevel.Pawisin}">
+                                <Setter Property="BorderBrush" Value="{StaticResource TerracottaBrush}"/>
+                                <Setter Property="Background" Value="#FFF1E8"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel>
+                    <TextBlock Text="🥵 Pawisin (High Perspiration)" FontSize="15" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                    <TextBlock Text="You sweat heavily and feel sticky easily. Requires maximum fabric airflow." FontSize="12" Foreground="#8C8882" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Button>
+
+            <!-- NORMAL choice -->
+            <Button Command="{Binding SelectHulasCommand}" CommandParameter="Normal">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource SelectableCardButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedHulas}" Value="{x:Static models:HulasLevel.Normal}">
+                                <Setter Property="BorderBrush" Value="{StaticResource TerracottaBrush}"/>
+                                <Setter Property="Background" Value="#FFF1E8"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel>
+                    <TextBlock Text="😐 Normal (Moderate Perspiration)" FontSize="15" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                    <TextBlock Text="Standard response to heat. Benefits from breathable everyday natural fibers." FontSize="12" Foreground="#8C8882" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Button>
+
+            <!-- CHILL choice -->
+            <Button Command="{Binding SelectHulasCommand}" CommandParameter="Chill">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource SelectableCardButton}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedHulas}" Value="{x:Static models:HulasLevel.Chill}">
+                                <Setter Property="BorderBrush" Value="{StaticResource TerracottaBrush}"/>
+                                <Setter Property="Background" Value="#FFF1E8"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <StackPanel>
+                    <TextBlock Text="😎 Chill Lang (Low Perspiration)" FontSize="15" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}"/>
+                    <TextBlock Text="You rarely sweat much and handle heat comfortably. Can wear most blends." FontSize="12" Foreground="#8C8882" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <!-- 3. Dynamic Advice Card -->
+        <Border Grid.Row="2" Background="{StaticResource InputBgBrush}" CornerRadius="12" Padding="16" Margin="0,0,0,20">
+            <StackPanel>
+                <TextBlock Text="{Binding HulasLabel}" FontSize="14" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}" Margin="0,0,0,5"/>
+                <TextBlock Text="{Binding HulasAdvice}" FontSize="12" Foreground="#595550" TextWrapping="Wrap" LineHeight="16"/>
+            </StackPanel>
+        </Border>
+
+        <!-- 4. Save Button -->
+        <Button Grid.Row="3" Content="Save Profile &amp; Go to Dashboard" Style="{StaticResource SaveButton}" Margin="0,0,0,10"
+                Command="{Binding SaveAndProceedCommand}"
+                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"/>
+    </Grid>
+</Window>

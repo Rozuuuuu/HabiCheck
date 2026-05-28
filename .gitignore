@@ -1,0 +1,14 @@
+# User Secrets & API Keys
+config.txt
+
+# .NET Build outputs
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Databases
+*.db
+*.db-journal
+*.db-wal

@@ -1,0 +1,146 @@
+<Window x:Class="HabiCheck.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:viewmodels="clr-namespace:HabiCheck.ViewModels"
+        xmlns:converters="clr-namespace:HabiCheck.Converters"
+        mc:Ignorable="d"
+        Title="HabiCheck — Login" 
+        Height="700" Width="480"
+        MinHeight="560" MinWidth="400"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource CreamBrush}"
+        ResizeMode="CanResize">
+
+    <Window.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+
+        <!-- Premium styles for textboxes and buttons -->
+        <Style x:Key="LoginTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
+            <Setter Property="BorderBrush" Value="#D1CFCB"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="Padding" Value="12,14"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource DeepSageBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,15"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource SageGreenBrush}"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource DeepSageBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="20,14"/>
+            <Setter Property="Margin" Value="0,0,0,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource SageGreenBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TerracottaBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource TerracottaBrush}"/>
+            <Setter Property="BorderThickness" Value="1.5"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFF1E8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>     <!-- Top Branding Spacer -->
+            <RowDefinition Height="Auto"/>  <!-- Main form -->
+            <RowDefinition Height="*"/>     <!-- Bottom Spacer -->
+        </Grid.RowDefinitions>
+
+        <!-- Logo & Branding -->
+        <StackPanel Grid.Row="0" VerticalAlignment="Center">
+            <TextBlock Text="🌱" FontSize="64" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+            <TextBlock Text="HabiCheck" FontSize="36" FontWeight="Black" Foreground="{StaticResource DeepSageBrush}" HorizontalAlignment="Center"/>
+            <TextBlock Text="Eco-conscious Fabric Scanner &amp; Wardrobe Guide" FontSize="12" Foreground="{StaticResource SageGreenBrush}" HorizontalAlignment="Center" FontWeight="SemiBold"/>
+        </StackPanel>
+
+        <!-- Login / Register Form Card -->
+        <Border Grid.Row="1" Background="#FAF8F5" CornerRadius="16" Padding="24" BorderBrush="#EAE7E2" BorderThickness="1">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="15" Color="#E5E0D8" ShadowDepth="4" Direction="270" Opacity="0.5"/>
+            </Border.Effect>
+            
+            <StackPanel>
+                <TextBlock Text="Welcome Back" FontSize="20" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}" Margin="0,0,0,5"/>
+                <TextBlock Text="Log in or create a local profile to scan." FontSize="13" Foreground="#8C8882" Margin="0,0,0,25"/>
+
+                <!-- Username Input Label -->
+                <TextBlock Text="Username" FontSize="12" FontWeight="Bold" Foreground="{StaticResource DeepSageBrush}" Margin="0,0,0,6"/>
+                <!-- 💡 DEVELOPER NOTE: Binding text with UpdateSourceTrigger=PropertyChanged ensures ViewModel gets changes on every keystroke -->
+                <TextBox Style="{StaticResource LoginTextBox}" 
+                         Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
+
+                <!-- Error Message -->
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource TerracottaBrush}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,15"
+                           Visibility="{Binding ErrorMessage, Converter={StaticResource BoolToVisibility}}"/>
+
+                <!-- Login Button -->
+                <!-- 💡 DEVELOPER NOTE: CommandParameter passes this Window object to the ViewModel so it can close it after success -->
+                <Button Content="Log In" Style="{StaticResource PrimaryButton}" 
+                        Command="{Binding LoginCommand}" 
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"/>
+
+                <!-- Register Button -->
+                <Button Content="Register New Profile" Style="{StaticResource SecondaryButton}" 
+                        Command="{Binding RegisterCommand}" 
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Footer -->
+        <TextBlock Grid.Row="2" Text="Powered by Antigravity AI Engine" FontSize="11" Foreground="#AFAAA2" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+    </Grid>
+</Window>
