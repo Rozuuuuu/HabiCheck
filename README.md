@@ -26,6 +26,7 @@ To enable the AI features (wearer guides, fabric chat, and ecological digests), 
 3. In the root directory of this project, create a file named `config.txt`.
 4. Paste your API key into `config.txt` using the format:
    ```text
+   Example API:
    GEMINI_API_KEY="AIzaSyYourNewActualKeyHere..."
    ```
 5. **Security Note**: The `config.txt` file is explicitly ignored in [.gitignore](file:///c:/Users/CCS/source/repos/HabiCheck/.gitignore) so your API credentials will never be committed or uploaded to GitHub.
